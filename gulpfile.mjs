@@ -22,6 +22,7 @@ gulp.task("scss", function () {
         .pipe(
             autoprefixer({
                 overrideBrowserslist: ["last 8 versions"],
+                cascade: false
             })
         )
         .pipe(rename({ suffix: ".min" }))
@@ -67,22 +68,15 @@ gulp.task("browser-sync", function () {
 });
 
 gulp.task("export", function () {
-    const tasks = [
-        gulp.src("app/**/*.html").pipe(gulp.dest("dist")),
-        gulp.src("app/css/**/*.css").pipe(gulp.dest("dist/css")),
-        gulp.src("app/js/**/*.js").pipe(gulp.dest("dist/js")),
-        gulp.src("app/fonts/**/*.*").pipe(gulp.dest("dist/fonts")),
-        gulp.src("app/images/**/*.*").pipe(gulp.dest("dist/images")),
-    ];
-    return Promise.all(
-        tasks.map(
-            (stream) =>
-                new Promise((resolve, reject) => {
-                    stream.on("end", resolve);
-                    stream.on("error", reject);
-                })
-        )
-    );
+    return gulp
+        .src([
+            "app/**/*.html",
+            "app/css/**/*.css",
+            "app/js/**/*.js",
+            "app/fonts/**/*.*",
+            "app/images/**/*.*"
+        ], { base: "app" })
+        .pipe(gulp.dest("dist"));
 });
 
 gulp.task("watch", function () {
@@ -92,9 +86,12 @@ gulp.task("watch", function () {
 });
 
 gulp.task("deploy", function () {
-    return gulp.src("./dist/**/*").pipe(gulpGhPages());
+    return gulp.src("./dist/**/*")
+        .pipe(gulpGhPages({
+            remoteUrl: "https://github.com/Gorchitza7/GoSurf_2024.git" 
+        }));
 });
 
-gulp.task("build", gulp.series("clean", "export", "deploy"));
+gulp.task("build", gulp.series("clean", "scss", "js", "export"));
 
 gulp.task("default", gulp.parallel("css", "scss", "js", "browser-sync", "watch"));
